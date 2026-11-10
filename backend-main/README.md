@@ -21,7 +21,7 @@ GET /api/rankings?limit=10&sortBy=achievementRate&order=asc
 
 ## 1. 시작 전 — 버전 확인
 
-**터미널은 `package.json` 파일이 있는 `cinefund-backend/` 폴더에서 실행합니다.**
+**명령은 모노레포 루트 폴더에서 실행합니다.**
 
 | 준비물         | 권장/필수 기준                                                 | 확인 명령어        |
 | -------------- | -------------------------------------------------------------- | ------------------ |
@@ -42,7 +42,7 @@ pnpm -v                       # 11.26.0 확인
 **Docker Desktop을 먼저 실행**하세요. 영화 JSON은 이미 준비되어 있으므로 **TMDB 키나 영화 재선정은 필요 없습니다.**
 
 ```bash
-pnpm install --frozen-lockfile  # ① 의존성 설치 (pnpm-lock.yaml 기준)
+pnpm install --frozen-lockfile  # ① 루트 workspace lockfile 기준으로 전체 의존성 설치
 cp .env.example .env            # ② 환경변수 파일 생성 (Git Bash)
 pnpm db:up                     # ③ Docker에서 PostgreSQL 18 실행 (PC 포트 5435)
 pnpm db:migrate                # ④ movies / fundings 테이블 생성
@@ -50,13 +50,13 @@ pnpm db:generate               # ⑤ Prisma Client 생성
 pnpm db:seed                   # ⑥ 준비된 JSON 영화 100편을 DB에 저장
 pnpm test:db                   # ⑦ 실제 DB 연결 및 영화 정보 검증
 pnpm test                      # ⑧ DB 없는 단위 테스트
-pnpm dev                       # ⑨ Express 서버 실행 (기본 3000번 포트)
+pnpm dev:backend               # ⑨ Express 서버 실행 (기본 3000번 포트)
 ```
 
 - **PowerShell**이라면 ②번 명령 대신 `Copy-Item .env.example .env`를 실행하세요.
 - 이미 `.env`가 있다면 덮어쓰지 말고 **3절**의 값이 맞는지 확인하세요.
 - `pnpm db:seed`는 `시딩 완료: 총 100편`, `pnpm test:db`는 `DB 테스트 통과`가 출력되면 정상입니다.
-- `pnpm dev` 실행 후 브라우저에서 **<http://localhost:3000/health>** 를 열어 `{ "message": "서버 정상 작동!" }`이 보이면 Express가 실행된 것입니다. **이 응답만으로 DB 연결이 확인되지는 않습니다.**
+- `pnpm dev:backend` 실행 후 브라우저에서 **<http://localhost:3000/health>** 를 열어 `{ "message": "서버 정상 작동!" }`이 보이면 Express가 실행된 것입니다. **이 응답만으로 DB 연결이 확인되지는 않습니다.**
 - `pnpm test`는 **DB 없이 가능한 단위 테스트**, `pnpm test:db`는 **실제 DB 검증**입니다.
 
 ## 3. 환경변수 `.env`
@@ -78,7 +78,7 @@ CORS_ORIGINS="http://localhost:5173"
 
 `5435`는 **내 PC에서 접속할 포트**이고, Docker 내부 PostgreSQL 포트는 `5432`입니다. `compose.yaml`의 사용자 이름·비밀번호·DB 이름과 `.env`가 서로 일치해야 합니다.
 
-`.env`는 서버가 **시작할 때 한 번만** 읽습니다. 값을 바꾼 뒤에는 `pnpm dev`를 껐다가 다시 실행하세요. `pnpm dev`(`node --watch`)는 소스 파일 변경은 자동으로 반영하지만 `.env` 변경은 감지하지 않습니다. 배포 환경의 허용 주소(`CORS_ORIGINS`)는 아직 정해지지 않았습니다(TBD).
+`.env`는 서버가 **시작할 때 한 번만** 읽습니다. 값을 바꾼 뒤에는 `pnpm dev:backend`를 껐다가 다시 실행하세요. `pnpm dev:backend`(`node --watch`)는 소스 파일 변경은 자동으로 반영하지만 `.env` 변경은 감지하지 않습니다. 배포 환경의 허용 주소(`CORS_ORIGINS`)는 아직 정해지지 않았습니다(TBD).
 
 **`.env`와 TMDB 실제 키는 GitHub에 올리지 마세요.** `.env.example`만 공유합니다.
 
@@ -88,11 +88,11 @@ CORS_ORIGINS="http://localhost:5173"
 
 ```bash
 pnpm db:up       # Docker DB 켜기 (이미 실행 중이면 그대로 사용)
-pnpm dev         # 백엔드 개발 서버 시작 (Ctrl + C로 서버 종료)
+pnpm dev:backend # 백엔드 개발 서버 시작 (Ctrl + C로 서버 종료)
 ```
 
 - DB 내용을 보고 싶을 때: `pnpm exec prisma studio`
-- 팀원이 **새 패키지**를 추가했다면: `pnpm install --frozen-lockfile`
+- 팀원이 **새 패키지**를 추가했다면: 루트에서 `pnpm install --frozen-lockfile`
 - 팀원이 **새 DB 마이그레이션**을 추가했다면: `pnpm db:migrate` → `pnpm db:generate`
 - 팀에서 **영화 JSON 업데이트에 합의한 경우에만**: `pnpm db:seed` (DB 상태 확인 후)
 - 작업 후 Docker DB 종료: `pnpm db:down` (**DB 데이터 유지**)
@@ -102,7 +102,7 @@ pnpm dev         # 백엔드 개발 서버 시작 (Ctrl + C로 서버 종료)
 ## 5. 폴더 구조 — 어디를 수정해야 할까?
 
 ```text
-cinefund-backend/
+backend-main/
 ├── data/
 │   └── movieDetails.json         # 배우 정보를 포함한 선정 영화 100편 (기존 데이터)
 ├── prisma/
@@ -339,8 +339,8 @@ Prisma의 `BigInt`는 일반 JSON으로 그대로 응답할 수 없어, 현재 `
 | JSON 영화 100편 DB 저장       | `pnpm db:seed`                   |
 | 실제 DB/영화 데이터 검사      | `pnpm test:db`                   |
 | 단위 테스트                   | `pnpm test`                      |
-| Express 개발 서버             | `pnpm dev`                       |
-| DB 웹 화면                    | `pnpm exec prisma studio`        |
+| Express 개발 서버             | `pnpm dev:backend`               |
+| DB 웹 화면                    | `pnpm --filter cinefund-db exec prisma studio` |
 | 영화 JSON 재선정 (담당자만)   | `pnpm movies:select --refresh`   |
 
 ## 10. 오류가 날 때 먼저 확인하기
@@ -356,8 +356,8 @@ Prisma의 `BigInt`는 일반 JSON으로 그대로 응답할 수 없어, 현재 `
 | `movieDetails.json` 오류       | JSON 존재 여부와 `actors`·제작비·100편 조건 확인                                                                                    |
 | `pnpm db:seed`에서 목록 불일치 | **기존 DB 영화 목록과 JSON이 다름**. 기존 후원 기록 확인 후 담당자와 조율                                                           |
 | `pnpm test`만 성공             | DB 검사까지 완료한 게 아님. `pnpm test:db` 별도로 실행                                                                              |
-| API 요청이 실패함     | 구현 경로와 요청/응답 계약은 [API 명세](docs/API_SPEC.md)를 확인합니다. POST/PATCH 요청에는 `Content-Type: application/json` 헤더를 사용합니다. `pnpm dev` 실행, `pnpm db:up`·`pnpm db:migrate`·`pnpm db:generate`·`pnpm db:seed`로 DB 준비를 확인합니다. 응답이 `{ "error": ... }`이면 `code`를 확인합니다. |
-| 브라우저 콘솔에 CORS 오류        | `.env`의 `CORS_ORIGINS`가 프런트엔드 주소(`http://`, 포트까지 정확히)와 같은지 확인하고, 수정했다면 `pnpm dev`를 다시 시작. curl에서는 문제없고 브라우저에서만 생긴다면 대부분 이 설정 |
+| API 요청이 실패함     | 구현 경로와 요청/응답 계약은 [API 명세](docs/API_SPEC.md)를 확인합니다. POST/PATCH 요청에는 `Content-Type: application/json` 헤더를 사용합니다. `pnpm dev:backend` 실행, `pnpm db:up`·`pnpm db:migrate`·`pnpm db:generate`·`pnpm db:seed`로 DB 준비를 확인합니다. 응답이 `{ "error": ... }`이면 `code`를 확인합니다. |
+| 브라우저 콘솔에 CORS 오류        | `.env`의 `CORS_ORIGINS`가 프런트엔드 주소(`http://`, 포트까지 정확히)와 같은지 확인하고, 수정했다면 `pnpm dev:backend`를 다시 시작. curl에서는 문제없고 브라우저에서만 생긴다면 대부분 이 설정 |
 
 ## 11. 협업할 때 주의할 점
 
@@ -373,6 +373,6 @@ Prisma의 `BigInt`는 일반 JSON으로 그대로 응답할 수 없어, 현재 `
 
 **핵심만 다시 보기:**
 
-- **처음:** `pnpm install --frozen-lockfile` → `.env` 복사 → `pnpm db:up` → `pnpm db:migrate` → `pnpm db:generate` → `pnpm db:seed` → `pnpm test:db` → `pnpm dev`
-- **평소:** `pnpm db:up` → `pnpm dev` (DB 확인은 `pnpm exec prisma studio`)
+- **처음:** 루트에서 `pnpm install --frozen-lockfile` → `backend-main/.env` 복사 → `pnpm db:up` → `pnpm db:migrate` → `pnpm db:generate` → `pnpm db:seed` → `pnpm test:db` → `pnpm dev:backend`
+- **평소:** `pnpm db:up` → `pnpm dev:backend` (DB 확인은 `pnpm --filter cinefund-db exec prisma studio`)
 - **영화 재선정은 일반 팀원에게 필요 없음.** 제공된 JSON 100편과 배우 정보로 DB를 만들면 됩니다.

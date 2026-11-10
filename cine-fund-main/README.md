@@ -12,7 +12,7 @@
   <p>
     <b><a href="https://cine-fund-main.vercel.app/">CineFund 바로가기</a></b> ·
     <a href="https://www.figma.com/design/bYyl4ZsROpGqfC7nvNWyTj/시네펀딩-|-영화-탐색·펀딩-UX?node-id=2-6&t=o8qJAmEkbxW6vFaj-1">Figma</a> ·
-    <a href="https://github.com/Sprint-project-1/backend">Backend 저장소</a>
+    <a href="../backend-main/README.md">Backend 실행 가이드</a>
   </p>
 </div>
 
