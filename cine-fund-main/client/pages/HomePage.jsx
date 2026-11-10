@@ -150,6 +150,7 @@ export default function HomePage() {
   const cursorCache = useRef({
     query: searchTerm,
     byPage: new Map([[1, undefined]]),
+    pages: new Map(),
   });
   const [lastPage, setLastPage] = useState(null);
   const [isResolvingPage, setIsResolvingPage] = useState(false);
@@ -165,13 +166,25 @@ export default function HomePage() {
   useEffect(() => {
     if (cursorCache.current.query === searchTerm) return;
 
-    cursorCache.current = { query: searchTerm, byPage: new Map([[1, undefined]]) };
+    cursorCache.current = {
+      query: searchTerm,
+      byPage: new Map([[1, undefined]]),
+      pages: new Map(),
+    };
     setPagination({ query: searchTerm, page: 1 });
     setLastPage(null);
   }, [searchTerm]);
 
   useEffect(() => {
     const controller = new AbortController();
+    const cachedPage = cursorCache.current.pages.get(currentPage);
+    if (cachedPage) {
+      setMoviePage(cachedPage);
+      setIsLoading(false);
+      setError("");
+      return () => controller.abort();
+    }
+
     setIsLoading(true);
     setError("");
     setMoviePage({ items: [], page: { hasMore: false, nextCursor: null } });
@@ -187,7 +200,9 @@ export default function HomePage() {
       .then(({ items, page }) => {
         if (controller.signal.aborted) return;
 
-        setMoviePage({ items: items.map(toMovieCard), page });
+        const resolvedPage = { items: items.map(toMovieCard), page };
+        cursorCache.current.pages.set(currentPage, resolvedPage);
+        setMoviePage(resolvedPage);
         if (page.hasMore && page.nextCursor) {
           cursorCache.current.byPage.set(currentPage + 1, page.nextCursor);
         } else {
@@ -255,6 +270,10 @@ export default function HomePage() {
         }
 
         cursorCache.current.byPage.set(pageToResolve, result.page.nextCursor);
+        cursorCache.current.pages.set(pageToResolve, {
+          items: result.items.map(toMovieCard),
+          page: result.page,
+        });
       }
 
       setPagination({ query, page });
