@@ -1,0 +1,8 @@
+packages:
+  - backend-main
+  - cine-fund-main
+
+allowBuilds:
+  '@prisma/engines': true
+  core-js: true
+  prisma: true

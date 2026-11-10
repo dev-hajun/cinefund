@@ -1,0 +1,24 @@
+{
+  "name": "cinefund",
+  "private": true,
+  "packageManager": "pnpm@11.26.0",
+  "engines": {
+    "node": "^22.12.0 || >=24.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter cinefund-db --filter cine-fund dev",
+    "dev:backend": "pnpm --filter cinefund-db dev",
+    "dev:frontend": "pnpm --filter cine-fund dev",
+    "build": "pnpm --filter cine-fund build",
+    "lint": "pnpm --filter cine-fund lint",
+    "test": "pnpm --filter cinefund-db test",
+    "test:db": "pnpm --filter cinefund-db test:db",
+    "db:up": "pnpm --filter cinefund-db db:up",
+    "db:down": "pnpm --filter cinefund-db db:down",
+    "db:migrate": "pnpm --filter cinefund-db db:migrate",
+    "db:migrations:check": "pnpm --filter cinefund-db db:migrations:check",
+    "db:generate": "pnpm --filter cinefund-db db:generate",
+    "db:seed": "pnpm --filter cinefund-db db:seed",
+    "movies:select": "pnpm --filter cinefund-db movies:select"
+  }
+}
